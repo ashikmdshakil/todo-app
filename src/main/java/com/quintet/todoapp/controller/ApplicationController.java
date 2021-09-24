@@ -6,10 +6,16 @@ import com.quintet.todoapp.model.User;
 import com.quintet.todoapp.repository.UserMongoRepo;
 import com.quintet.todoapp.service.MongoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,19 +29,30 @@ public class ApplicationController {
     private Address address;
     @Autowired
     private Role role;
+    @Autowired
+    private PasswordEncoder encoder;
 
-    @GetMapping("/")
+    @GetMapping("/userRegistration")
     @ResponseBody
-    public String test(){
-        user.setId(MongoService.generateId());
-        user.setName("Ashik Muhammad Shakil");
-        user.setEmail("ashikmdshakilpranto@gmail.com");
-        user.setMobileNumber("01720024944");
-        user.setPassword("123456");
-        role.setId(1);
-        user.setRole(role);
-        userRepo.save(user);
-        return "Hello Mongo project !";
+    public String test(@RequestBody User user){
+        String status = null;
+        try {
+            user.setId(MongoService.generateId());
+            user.setPassword(encoder.encode(user.getPassword()));
+            role.setId(1);
+            user.setRole(role);
+            userRepo.save(user);
+            status = "success";
+        } catch (Exception e) {
+            status = "failed";
+        }
+        return status;
+    }
+
+    @GetMapping(value = "login")
+    @ResponseBody
+    public Principal login(Principal userPrincipal ) {
+        return userPrincipal;
     }
 
     @GetMapping("/getUsers")
@@ -44,11 +61,6 @@ public class ApplicationController {
         return userRepo.findByEmail("ashikmdshakilpranto@gmail.com").getRole();
     }
 
-    @GetMapping("/getMessage")
-    @ResponseBody
-    public String getMessage(){
-        return "Hello this is message";
-    }
 
 
 }
